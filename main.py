@@ -13,8 +13,9 @@ import os
 import re
 import math
 
-global positionXY, buffer
+global positionXY, buffer, gps_all
 positionXY = np.array(([1,1],[2,2],[3,3],[4,4],[5,5]))
+gps_all = np.array(([1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5]))
 buffer = 1024
 
 global gps1_lon, gps1_lat, gps1_lat
@@ -38,10 +39,11 @@ def sysID_to_index(sysID: int):
         return 1
 
 
-def position_update(sysID,posXY):
-    global positionXY
+def position_update(sysID,posXY,lon,lat,alt):
+    global positionXY, gps_all
     i = sysID_to_index(sysID)
     positionXY[i-1,:]=posXY
+    gps_all[i-1,:]=[lon,lat,alt]
 
 
 class stMercator:
@@ -99,7 +101,7 @@ def stringToMercator(raw_data):
 
 
 def position_callback(host,port):
-    global positionXY, gps1_lon, gps1_lat, gps1_alt
+    global positionXY, gps_all
 
     s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
@@ -159,18 +161,13 @@ def position_callback(host,port):
 
                     while idx < len(mercators):
 
-                        lat_ref = 0
-                        lon_ref = 0
+                        lon_ref = 142.1962
+                        lat_ref = -36.7189
                         alt_ref = 0
 
                         ned = lla2ned(mercators[idx].Latitude, mercators[idx].Longitude, mercators[idx].Altitude, lat_ref, lon_ref, alt_ref)
                         posXY = ned[0:2]      
-                        position_update(mercators[idx].System,posXY)
-
-                        if mercators[idx].System == 1:
-                            gps1_lon = mercators[idx].Longitude
-                            gps1_lat = mercators[idx].Latitude
-                            gps1_alt = mercators[idx].Altitude
+                        position_update(mercators[idx].System,posXY,mercators[idx].Longitude,mercators[idx].Latitude,mercators[idx].Altitude)
 
                         idx += 1
 
@@ -204,18 +201,20 @@ if __name__ == "__main__":
     time.sleep(1)
     with open(file_name,'w') as file:
         output = csv.writer(file)
-        output.writerow(['p0x','p0y','p1x','p1y','p2x','p2y','p3x','p3y','p4x','p4y','l0x','l0y','l1x','l1y','l2x','l2y','l3x','l3y','l4x','l4y','iteration','execution_time','gps1_lon','gps1_lat','gps1_alt'])
+        output.writerow(['p0x','p0y','p1x','p1y','p2x','p2y','p3x','p3y','p4x','p4y','l0x','l0y','l1x','l1y','l2x','l2y','l3x','l3y','l4x','l4y','iteration','execution_time','gps0_lon','gps0_lat','gps0_alt','gps1_lon','gps1_lat','gps1_alt','gps2_lon','gps2_lat','gps2_alt','gps3_lon','gps3_lat','gps3_alt','gps4_lon','gps4_lat','gps4_alt'])
     
         while True:
             
             positionXY_temp = positionXY
-            
+            gps_temp = gps_all
+
+
             start_time = time.time()
             location,_,iteration = balloon_main(n_balloons,leader,anchor_list,positionXY_temp,sigma_range_measurement_val)
             execution_time = time.time()-start_time
             print('-----')
             print(location-positionXY_temp)
-            output.writerow([positionXY_temp[0,0],positionXY_temp[0,1],positionXY_temp[1,0],positionXY_temp[1,1],positionXY_temp[2,0],positionXY_temp[2,1],positionXY_temp[3,0],positionXY_temp[3,1],positionXY_temp[4,0],positionXY_temp[4,1],location[0,0],location[0,1],location[1,0],location[1,1],location[2,0],location[2,1],location[3,0],location[3,1],location[4,0],location[4,1],iteration,execution_time,gps1_lon,gps1_lat,gps1_alt])
+            output.writerow([positionXY_temp[0,0],positionXY_temp[0,1],positionXY_temp[1,0],positionXY_temp[1,1],positionXY_temp[2,0],positionXY_temp[2,1],positionXY_temp[3,0],positionXY_temp[3,1],positionXY_temp[4,0],positionXY_temp[4,1],location[0,0],location[0,1],location[1,0],location[1,1],location[2,0],location[2,1],location[3,0],location[3,1],location[4,0],location[4,1],iteration,execution_time,gps_temp[0,0],gps_temp[0,1],gps_temp[0,2],gps_temp[1,0],gps_temp[1,1],gps_temp[1,2],gps_temp[2,0],gps_temp[2,1],gps_temp[2,2],gps_temp[3,0],gps_temp[3,1],gps_temp[3,2],gps_temp[4,0],gps_temp[4,1],gps_temp[4,2]])
 
             time.sleep(rate)
 
