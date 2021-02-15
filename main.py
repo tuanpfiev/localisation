@@ -14,8 +14,8 @@ import re
 import math
 
 global positionXY, buffer, gps_all
-positionXY = np.array(([1,1],[2,2],[3,3],[4,4],[5,5]))
-gps_all = np.array(([1,1,1],[2,2,2],[3,3,3],[4,4,4],[5,5,5]))
+positionXY = np.array(([1.0,1.0],[2.0,2.0],[3.0,3.0],[4.0,4.0],[5.0,5.0]))
+gps_all = np.array(([1.0,1.0,1.0],[2.0,2.0,2.0],[3.0,3.0,3.0],[4.0,4.0,4.0],[5.0,5.0,5.0]))
 buffer = 1024
 
 global gps1_lon, gps1_lat, gps1_lat
